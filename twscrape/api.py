@@ -1,10 +1,12 @@
 from contextlib import aclosing
+from datetime import datetime
 
 from httpx import Response
 
 from .accounts_pool import AccountsPool
 from .logger import set_log_level
-from .models import Tweet, User, parse_tweet, parse_tweets, parse_user, parse_users
+from .models import (Tweet, User, parse_tweet, parse_tweets, parse_user,
+                     parse_users)
 from .queue_client import QueueClient
 from .utils import encode_params, find_obj, get_by_path
 
@@ -426,10 +428,12 @@ class API:
             async for x in gen:
                 yield x
 
-    async def list_timeline(self, list_id: int, limit=-1, kv=None):
+    async def list_timeline(self, list_id: int, limit=-1, kv=None, since: datetime = None):
         async with aclosing(self.list_timeline_raw(list_id, limit=limit, kv=kv)) as gen:
             async for rep in gen:
                 for x in parse_tweets(rep, limit):
+                    if since is not None and x.date < since:
+                        break
                     yield x
 
     # likes
